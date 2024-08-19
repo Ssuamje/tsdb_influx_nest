@@ -1,4 +1,4 @@
-export class FluxQueryBuilder {
+export class IFFluxQueryBuilder {
   private queryParts: string[] = [];
 
   from(bucket: string): this {

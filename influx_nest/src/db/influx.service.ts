@@ -1,8 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InfluxDB, QueryApi, WriteApi } from '@influxdata/influxdb-client';
-import { MyUsageData } from './influx.types';
+import { IFKeys, MyUsageData } from './influx.types';
 import { UserUsagePoint } from './influx.point';
-import { FluxQueryBuilder } from './influx-query-builder';
+import { IFFluxQueryBuilder } from './influx-query-builder';
 
 @Injectable()
 export class InfluxService {
@@ -29,32 +29,29 @@ export class InfluxService {
   }
 
   async query(): Promise<MyUsageData[]> {
-    const builder = new FluxQueryBuilder();
-
-    const deviceData = builder
-      .from('init_bucket')
+    const idFromArgument = 'sanan_id';
+    const deviceData = new IFFluxQueryBuilder()
+      .from(this.BUCKET)
       .range('-1h')
-      .filter('_measurement', 'usage')
-      .filter('_field', 'deviceId')
-      .filter('userId', 'sanan_id')
-      .keep(['_time', '_value'])
-      .rename({ _value: 'deviceId' })
+      .filter(IFKeys._measurement, UserUsagePoint.MEASUREMENT)
+      .filter(IFKeys._field, UserUsagePoint.FIELD_DEVICE_ID)
+      .filter(UserUsagePoint.TAG_USER_ID, idFromArgument)
+      .keep([IFKeys._time, IFKeys._value])
+      .rename({ _value: UserUsagePoint.FIELD_DEVICE_ID })
       .build();
 
-    const usageData = builder
-      .reset()
-      .from('init_bucket')
+    const usageData = new IFFluxQueryBuilder()
+      .from(this.BUCKET)
       .range('-1h')
-      .filter('_measurement', 'usage')
-      .filter('_field', 'usageMinutes')
-      .filter('userId', 'sanan_id')
-      .keep(['_time', '_value'])
-      .rename({ _value: 'usageMinutes' })
+      .filter(IFKeys._measurement, UserUsagePoint.MEASUREMENT)
+      .filter(IFKeys._field, UserUsagePoint.FIELD_USAGE_MINUTES)
+      .filter(UserUsagePoint.TAG_USER_ID, idFromArgument)
+      .keep([IFKeys._time, IFKeys._value])
+      .rename({ _value: UserUsagePoint.FIELD_USAGE_MINUTES })
       .build();
 
-    const joinedQuery = builder
-      .reset()
-      .join({ device: deviceData, usage: usageData }, ['_time'])
+    const joinedQuery = new IFFluxQueryBuilder()
+      .join({ device: deviceData, usage: usageData }, [IFKeys._time])
       .build();
 
     console.log(`joinedQuery = ${joinedQuery}`);

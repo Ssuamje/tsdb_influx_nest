@@ -1,4 +1,4 @@
-export enum INFLUX_KEY {
+export enum IFKeys {
   _field = '_field',
   _value = '_value',
   _time = '_time',
