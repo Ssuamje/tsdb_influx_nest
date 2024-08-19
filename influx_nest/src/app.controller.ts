@@ -7,12 +7,15 @@ export class AppController {
 
   @Get()
   async query() {
-    Logger.debug(`current token = ${process.env.INFLUX_DB_TOKEN}`);
-    return this.influxService.query();
+    const result = await this.influxService.query();
+    result.forEach((r) => {
+      Logger.debug(`${r.userId}, ${r._field}, ${r._value}`);
+    });
+    return result;
   }
 
   @Post()
   async writePoint() {
-    return this.influxService.writePoint();
+    return this.influxService.writeUserUsagePoint();
   }
 }
